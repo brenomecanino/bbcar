@@ -19,8 +19,8 @@ public sealed class ClienteComVeiculo
 }
 public sealed record OrcamentoItemDto(Guid? Id, string Descricao, decimal Quantidade, decimal ValorUnitario, decimal DescontoUnitario);
 public sealed record OrcamentoDto(Guid? Id, Guid ClienteId, Guid VeiculoId, StatusOrcamento Status, IReadOnlyList<OrcamentoItemDto> Itens);
-public sealed record OrcamentoResumoDto(Guid Id, string Placa, string Cliente, string Contato, DateTimeOffset Data, decimal ValorTotal, StatusOrcamento Status);
-public sealed record OrcamentoCompletoDto(Guid Id, ClienteComVeiculo Cliente, StatusOrcamento Status, IReadOnlyList<OrcamentoItemDto> Itens, TotaisOrcamento Totais, DateTimeOffset CriadoEm);
+public sealed record OrcamentoResumoDto(Guid Id, long Numero, string Placa, string Cliente, string Contato, DateTimeOffset Data, decimal ValorTotal, StatusOrcamento Status);
+public sealed record OrcamentoCompletoDto(Guid Id, long Numero, ClienteComVeiculo Cliente, StatusOrcamento Status, IReadOnlyList<OrcamentoItemDto> Itens, TotaisOrcamento Totais, DateTimeOffset CriadoEm);
 public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Page, int Total);
 
 public interface IClienteService

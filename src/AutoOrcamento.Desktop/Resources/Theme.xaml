@@ -159,8 +159,7 @@
         <Setter Property="AlternatingRowBackground" Value="#FFF0F3F6"/>
         <Setter Property="GridLinesVisibility" Value="None"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <!-- Distribute remaining space across columns evenly by default -->
-        <Setter Property="ColumnWidth" Value="*"/>
+        <!-- Columns will use explicit widths defined per DataGrid to avoid automatic stretching -->
     </Style>
 
 </ResourceDictionary>

@@ -43,6 +43,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.ToTable("orcamentos", t => t.HasCheckConstraint("ck_orcamentos_status", "status IN ('pendente','aprovado','recusado')"));
             e.HasKey(x => x.Id);
             e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.Numero).HasColumnName("numero").ValueGeneratedOnAdd();
             e.Property(x => x.ClienteId).HasColumnName("cliente_id");
             e.Property(x => x.VeiculoId).HasColumnName("veiculo_id");
             e.Property(x => x.Status).HasColumnName("status").HasConversion(v => v.ToString().ToLowerInvariant(), v => Enum.Parse<StatusOrcamento>(v, true)).HasMaxLength(12);

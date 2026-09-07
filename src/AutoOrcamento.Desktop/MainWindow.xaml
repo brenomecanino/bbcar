@@ -70,11 +70,12 @@
                         <DataGrid ItemsSource="{Binding Orcamentos}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
                                 <!-- Colunas com larguras mais equilibradas para evitar que 'Cliente' ocupe todo o espaço -->
+                                <DataGridTextColumn Header="Nº" Binding="{Binding Numero, StringFormat={}{0:D5}}" Width="80" />
                                 <DataGridTextColumn Header="Placa" Binding="{Binding Placa}" Width="110" />
-                                <DataGridTextColumn Header="Cliente" Binding="{Binding Cliente}" Width="*" />
-                                <DataGridTextColumn Header="Contato" Binding="{Binding Contato}" Width="150" />
+                                <DataGridTextColumn Header="Cliente" Binding="{Binding Cliente}" Width="220" />
+                                <DataGridTextColumn Header="Contato" Binding="{Binding Contato}" Width="170" />
                                 <DataGridTextColumn Header="Data" Binding="{Binding Data,StringFormat=dd/MM/yyyy}" Width="110" />
-                                <DataGridTextColumn Header="Valor Total" Binding="{Binding ValorTotal,StringFormat=C}" Width="120" />
+                                <DataGridTextColumn Header="Valor Total" Binding="{Binding ValorTotal,StringFormat=C}" Width="140" />
                                 <DataGridTemplateColumn Header="Status" Width="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -155,10 +156,10 @@
                             <TextBox Grid.Row="0" Grid.Column="3" x:Name="QuantidadeBox" Margin="4,0" Style="{StaticResource WatermarkedTextBox}" Text="{Binding Quantidade, UpdateSourceTrigger=PropertyChanged}" ToolTip="Quantidade" Tag="Ex.: 1" PreviewTextInput="Quantidade_PreviewTextInput" DataObject.Pasting="Quantidade_Pasting" TextChanged="Quantidade_TextChanged"/>
 
                             <Label Grid.Row="0" Grid.Column="4" VerticalAlignment="Center" Content="Vlr Unit:" Margin="8,0,0,0"/>
-                            <TextBox Grid.Row="0" Grid.Column="5" x:Name="ValorUnitarioBox" Style="{StaticResource WatermarkedTextBox}" Text="{Binding ValorUnitario, UpdateSourceTrigger=PropertyChanged}" ToolTip="Valor unitário" Tag="Ex.: 10,00" PreviewTextInput="Monetary_PreviewTextInput" LostFocus="Monetary_LostFocus" DataObject.Pasting="Monetary_Pasting" TextChanged="Monetary_TextChanged"/>
+                            <TextBox Grid.Row="0" Grid.Column="5" x:Name="ValorUnitarioBox" Style="{StaticResource WatermarkedTextBox}" MaxLength="5" Text="{Binding ValorUnitario, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" ToolTip="Valor unitário" Tag="Ex.: 10000" PreviewTextInput="DigitsOnly_PreviewTextInput" DataObject.Pasting="DigitsOnly_Pasting" TextChanged="MoneyDigits_TextChanged"/>
 
                             <Label Grid.Row="0" Grid.Column="6" VerticalAlignment="Center" Content="Desconto:" Margin="8,0,0,0"/>
-                            <TextBox Grid.Row="0" Grid.Column="7" x:Name="DescontoUnitarioBox" Style="{StaticResource WatermarkedTextBox}" Text="{Binding DescontoUnitario, UpdateSourceTrigger=PropertyChanged}" ToolTip="Desconto unitário" Tag="Ex.: 0,00" PreviewTextInput="Monetary_PreviewTextInput" LostFocus="Monetary_LostFocus" DataObject.Pasting="Monetary_Pasting" TextChanged="Monetary_TextChanged"/>
+                            <TextBox Grid.Row="0" Grid.Column="7" x:Name="DescontoUnitarioBox" Style="{StaticResource WatermarkedTextBox}" MaxLength="5" Text="{Binding DescontoUnitario, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged}" ToolTip="Desconto unitário" Tag="Ex.: 1000" PreviewTextInput="DigitsOnly_PreviewTextInput" DataObject.Pasting="DigitsOnly_Pasting" TextChanged="MoneyDigits_TextChanged"/>
 
                             <Button Grid.Row="0" Grid.Column="8" Content="+" Width="45" Command="{Binding AdicionarItemCommand}" Click="AdicionarItem_Click" Margin="8,0,0,0"/>
 
@@ -170,12 +171,12 @@
 
                         <DataGrid Grid.Row="2" ItemsSource="{Binding Itens}" AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao,UpdateSourceTrigger=PropertyChanged}" Width="*"/>
-                                <DataGridTextColumn Header="Qtd" Binding="{Binding Quantidade,UpdateSourceTrigger=PropertyChanged}"/>
-                                <DataGridTextColumn Header="Vlr Unit" Binding="{Binding ValorUnitario,UpdateSourceTrigger=PropertyChanged,StringFormat=C}"/>
-                                <DataGridTextColumn Header="Desc Unit" Binding="{Binding DescontoUnitario,UpdateSourceTrigger=PropertyChanged,StringFormat=C}"/>
-                                <DataGridTextColumn Header="Subtotal" Binding="{Binding Subtotal,StringFormat=C}" IsReadOnly="True"/>
-                                <DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Descrição" Binding="{Binding Descricao,UpdateSourceTrigger=PropertyChanged}" Width="320"/>
+                                <DataGridTextColumn Header="Qtd" Binding="{Binding Quantidade,UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                <DataGridTextColumn Header="Vlr Unit" Binding="{Binding ValorUnitario,UpdateSourceTrigger=PropertyChanged,StringFormat=C}" Width="120"/>
+                                <DataGridTextColumn Header="Desc Unit" Binding="{Binding DescontoUnitario,UpdateSourceTrigger=PropertyChanged,StringFormat=C}" Width="120"/>
+                                <DataGridTextColumn Header="Subtotal" Binding="{Binding Subtotal,StringFormat=C}" Width="120" IsReadOnly="True"/>
+                                <DataGridTemplateColumn Width="110">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <Button Content="Remover" Command="{Binding DataContext.RemoverItemCommand,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
@@ -186,8 +187,12 @@
                         </DataGrid>
 
                         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
+                            <TextBlock Text="Sem desconto:" VerticalAlignment="Center" Margin="8,0"/>
+                            <TextBlock Text="{Binding Totais.TotalSemDesconto,StringFormat=C}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock Text="Desconto:" VerticalAlignment="Center" Margin="8,0"/>
+                            <TextBlock Text="{Binding Totais.TotalDesconto,StringFormat=C}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                             <TextBlock Text="Total:" VerticalAlignment="Center" Margin="8,0"/>
-                            <TextBlock Text="{Binding ValorTotal,StringFormat=C}" VerticalAlignment="Center" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Totais.TotalComDesconto,StringFormat=C}" VerticalAlignment="Center" FontWeight="Bold"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -213,11 +218,11 @@
 
                         <DataGrid Grid.Row="1" ItemsSource="{Binding Clientes}" AutoGenerateColumns="False" IsReadOnly="True" SelectedItem="{Binding ClienteSelecionado}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nome" Binding="{Binding Nome}" Width="*"/>
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Nome}" Width="260"/>
                                 <DataGridTextColumn Header="Placa" Binding="{Binding Placa}" Width="120"/>
                                 <DataGridTextColumn Header="Modelo" Binding="{Binding Modelo}" Width="140"/>
                                 <DataGridTextColumn Header="Ano" Binding="{Binding Ano}" Width="80"/>
-                                <DataGridTextColumn Header="Telefone" Binding="{Binding Telefone}" Width="140"/>
+                                <DataGridTextColumn Header="Telefone" Binding="{Binding Telefone}" Width="170"/>
                                 <DataGridTextColumn Header="CPF" Binding="{Binding Cpf}" Width="140"/>
                             </DataGrid.Columns>
                         </DataGrid>

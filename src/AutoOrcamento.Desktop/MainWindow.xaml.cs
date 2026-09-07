@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Text.RegularExpressions;
@@ -26,7 +25,12 @@ public partial class MainWindow : Window
     // Mantido intencionalmente vazio para evitar referências inválidas.
     private async void Cadastrar_Click(object sender, RoutedEventArgs e) { await System.Threading.Tasks.Task.CompletedTask; }
 
-    private void AdicionarItem_Click(object sender, RoutedEventArgs e) => DescricaoItem.Focus();
+    private void AdicionarItem_Click(object sender, RoutedEventArgs e)
+    {
+        ValorUnitarioBox.Clear();
+        DescontoUnitarioBox.Clear();
+        DescricaoItem.Focus();
+    }
 
     private void EditarCliente_Click(object sender, RoutedEventArgs e)
     {
@@ -75,119 +79,42 @@ public partial class MainWindow : Window
         else e.CancelCommand();
     }
 
-    // Valores monetários: permitir dígitos, vírgula e ponto; formatar em LostFocus para pt-BR (C2)
-    private static readonly Regex _moneyChars = new(@"^[0-9\.,]+$");
-    private bool _isFormattingMoney = false;
-
-    private void Monetary_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    private void DigitsOnly_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
-        e.Handled = !_moneyChars.IsMatch(e.Text);
+        e.Handled = !_digitsOnly.IsMatch(e.Text);
     }
 
-    private void Monetary_Pasting(object sender, DataObjectPastingEventArgs e)
+    private void DigitsOnly_Pasting(object sender, DataObjectPastingEventArgs e)
     {
         if (e.DataObject.GetDataPresent(DataFormats.Text))
         {
             var text = e.DataObject.GetData(DataFormats.Text) as string ?? string.Empty;
-            if (!_moneyChars.IsMatch(text)) e.CancelCommand();
+            if (!_digitsOnly.IsMatch(text)) e.CancelCommand();
         }
         else e.CancelCommand();
     }
 
-    private void Monetary_LostFocus(object sender, RoutedEventArgs e)
+    private void MoneyDigits_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         if (sender is not System.Windows.Controls.TextBox tb) return;
-        var text = tb.Text?.Trim() ?? string.Empty;
+        var text = tb.Text ?? string.Empty;
         if (string.IsNullOrEmpty(text))
         {
-            tb.Text = 0m.ToString("C2", new CultureInfo("pt-BR"));
             if (tb.Name == "ValorUnitarioBox") vm.ValorUnitario = 0m;
             if (tb.Name == "DescontoUnitarioBox") vm.DescontoUnitario = 0m;
             return;
         }
 
-        // Normalizar entrada: lidar com formatos com '.' como milhares e ',' como decimal
-        int dotCount = text.Count(c => c == '.');
-        int commaCount = text.Count(c => c == ',');
-        string normalized;
-        if (commaCount > 0)
+        if (decimal.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
         {
-            normalized = text.Replace(".", "").Replace(',', '.');
-        }
-        else if (dotCount > 0)
-        {
-            if (dotCount > 1)
-                normalized = text.Replace(".", "");
-            else
-            {
-                var idx = text.IndexOf('.');
-                var decimals = text.Length - idx - 1;
-                if (decimals <= 2) normalized = text; // assume '.' decimal
-                else normalized = text.Replace(".", "");
-            }
-        }
-        else normalized = text;
-
-        if (decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
-        {
-            tb.Text = value.ToString("C2", new CultureInfo("pt-BR"));
-            // Atualiza ViewModel explicitamente para evitar problemas de conversão
             if (tb.Name == "ValorUnitarioBox") vm.ValorUnitario = value;
             else if (tb.Name == "DescontoUnitarioBox") vm.DescontoUnitario = value;
         }
         else
         {
-            // se não parsear, reset para 0,00
-            tb.Text = 0m.ToString("C2", new CultureInfo("pt-BR"));
-            if (tb.Name == "ValorUnitarioBox") vm.ValorUnitario = 0m;
-            else if (tb.Name == "DescontoUnitarioBox") vm.DescontoUnitario = 0m;
-        }
-    }
-
-    private void Monetary_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-    {
-        if (sender is not System.Windows.Controls.TextBox tb) return;
-        if (_isFormattingMoney) return;
-        _isFormattingMoney = true;
-        var text = tb.Text ?? string.Empty;
-
-        // remove currency symbol and spaces
-        var cleaned = text.Replace("R$", "").Trim();
-        // normalize separators: allow both '.' and ','
-        string normalized;
-        int dotCount = cleaned.Count(c => c == '.');
-        int commaCount = cleaned.Count(c => c == ',');
-        if (commaCount > 0)
-            normalized = cleaned.Replace(".", "").Replace(',', '.');
-        else if (dotCount > 1)
-            normalized = cleaned.Replace(".", "");
-        else
-            normalized = cleaned;
-
-        if (decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
-        {
-            tb.Text = value.ToString("C2", new CultureInfo("pt-BR"));
-            // set caret to end for simplicity
-            tb.SelectionStart = tb.Text.Length;
-            if (tb.Name == "ValorUnitarioBox")
-            {
-                ValorError.Visibility = Visibility.Collapsed;
-                vm.ValorUnitario = value;
-            }
-            else if (tb.Name == "DescontoUnitarioBox")
-            {
-                DescontoError.Visibility = Visibility.Collapsed;
-                vm.DescontoUnitario = value;
-            }
-        }
-        else
-        {
-            // keep user's input but show error
             if (tb.Name == "ValorUnitarioBox") ValorError.Visibility = Visibility.Visible;
             if (tb.Name == "DescontoUnitarioBox") DescontoError.Visibility = Visibility.Visible;
         }
-
-        _isFormattingMoney = false;
     }
 
     private void Quantidade_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)

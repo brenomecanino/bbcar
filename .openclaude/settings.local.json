@@ -25,7 +25,8 @@
       "Bash(git -C \"C:/Users/Breno/workspace/bbcar\" diff --check)",
       "Bash(DOTNET_ROLL_FORWARD=Major dotnet ef database update --project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Data/AutoOrcamento.Data.csproj\" --startup-project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Desktop/AutoOrcamento.Desktop.csproj\" --no-build)",
       "Bash(dotnet:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(taskkill //IM AutoOrcamento.Desktop.exe //F)"
     ]
   }
 }

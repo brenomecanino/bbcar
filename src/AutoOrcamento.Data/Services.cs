@@ -57,7 +57,7 @@ public sealed class OrcamentoService(AppDbContext db) : IOrcamentoService
         if (dataFinal is { } final) q = q.Where(x => x.CriadoEm < final.AddDays(1));
         var total = await q.CountAsync();
         var pagina = Math.Max(1, page);
-        var items = await q.OrderByDescending(x => x.CriadoEm).Skip((pagina - 1) * 100).Take(100).Select(x => new OrcamentoResumoDto(x.Id, x.Veiculo.Placa.ToUpper(), x.Cliente.Nome.ToUpper(), x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
+        var items = await q.OrderByDescending(x => x.CriadoEm).Skip((pagina - 1) * 100).Take(100).Select(x => new OrcamentoResumoDto(x.Id, x.Numero, x.Veiculo.Placa.ToUpper(), x.Cliente.Nome.ToUpper(), x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
         return new(items, pagina, total);
     }
 
@@ -98,5 +98,5 @@ public sealed class OrcamentoService(AppDbContext db) : IOrcamentoService
         return await ObterOrcamentoAsync(o.Id);
     }
 
-    private static OrcamentoCompletoDto Map(Orcamento o) => new(o.Id, new(o.ClienteId, o.VeiculoId, o.Cliente.Nome, o.Veiculo.Placa, o.Veiculo.Modelo, o.Veiculo.Ano, o.Cliente.Telefone, o.Cliente.Cpf), o.Status, o.Itens.Select(i => new OrcamentoItemDto(i.Id, i.Descricao, i.Quantidade, i.ValorUnitario, i.DescontoUnitario)).ToList(), new(o.TotalSemDesconto, o.TotalDesconto, o.TotalComDesconto, o.TotalSemDesconto == 0 ? 0 : Math.Round(o.TotalDesconto / o.TotalSemDesconto * 100, 2, MidpointRounding.AwayFromZero)), o.CriadoEm);
+    private static OrcamentoCompletoDto Map(Orcamento o) => new(o.Id, o.Numero, new(o.ClienteId, o.VeiculoId, o.Cliente.Nome, o.Veiculo.Placa, o.Veiculo.Modelo, o.Veiculo.Ano, o.Cliente.Telefone, o.Cliente.Cpf), o.Status, o.Itens.Select(i => new OrcamentoItemDto(i.Id, i.Descricao, i.Quantidade, i.ValorUnitario, i.DescontoUnitario)).ToList(), new(o.TotalSemDesconto, o.TotalDesconto, o.TotalComDesconto, o.TotalSemDesconto == 0 ? 0 : Math.Round(o.TotalDesconto / o.TotalSemDesconto * 100, 2, MidpointRounding.AwayFromZero)), o.CriadoEm);
 }
