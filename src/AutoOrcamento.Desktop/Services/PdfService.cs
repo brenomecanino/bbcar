@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using AutoOrcamento.Core.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -8,13 +9,67 @@ using QuestPDF.Infrastructure;
 
 namespace AutoOrcamento.Desktop.Services;
 
-public sealed class PdfService(IOrcamentoService orcamentos) : IPdfService
+public sealed class PdfService(IOrcamentoService orcamentos, IConfiguration configuration) : IPdfService
 {
     public async Task<string> GerarPdfAsync(Guid id, string? caminhoSaida)
     {
-        var o=await orcamentos.ObterOrcamentoAsync(id); var path=caminhoSaida ?? Path.Combine(Path.GetTempPath(),$"orcamento_{o.Cliente.Placa}_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
-        Document.Create(d=>d.Page(p=>{p.Size(PageSizes.A4);p.Margin(35);p.DefaultTextStyle(x=>x.FontSize(10));p.Header().Row(r=>{r.RelativeItem().Text("AUTO ORÇAMENTO").Bold().FontSize(18);r.ConstantItem(180).AlignRight().Text($"ORÇAMENTO #{o.Id.ToString()[..8].ToUpper()}\n{o.CriadoEm:dd/MM/yyyy}");});p.Content().PaddingVertical(20).Column(c=>{c.Spacing(12);c.Item().Text($"Cliente: {o.Cliente.Nome}   Telefone: {o.Cliente.Telefone}   CPF: {o.Cliente.Cpf}");c.Item().Text($"Veículo: {o.Cliente.Modelo}/{o.Cliente.Ano}   Placa: {o.Cliente.Placa}");c.Item().Table(t=>{t.ColumnsDefinition(x=>{x.RelativeColumn(4);x.RelativeColumn();x.RelativeColumn();x.RelativeColumn();x.RelativeColumn();});t.Header(h=>{foreach(var s in new[]{"Descrição","Qtd","Vlr Unit","Desc","Subtotal"})h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text(s).Bold();});foreach(var i in o.Itens){t.Cell().Padding(3).Text(i.Descricao);t.Cell().Padding(3).Text(i.Quantidade.ToString("N2"));t.Cell().Padding(3).Text(i.ValorUnitario.ToString("C"));t.Cell().Padding(3).Text(i.DescontoUnitario.ToString("C"));t.Cell().Padding(3).Text((i.Quantidade*(i.ValorUnitario-i.DescontoUnitario)).ToString("C"));}});c.Item().AlignRight().Text($"Total sem desconto: {o.Totais.TotalSemDesconto:C}\nDesconto: {o.Totais.TotalDesconto:C} ({o.Totais.PercentualDesconto:N2}%)\nTOTAL: {o.Totais.TotalComDesconto:C}").Bold();});p.Footer().Column(c=>{c.Item().Text($"Status: {o.Status.ToString().ToLowerInvariant()} | Validade: 15 dias");c.Item().PaddingTop(25).AlignCenter().Text("__________________________________\nAssinatura do cliente");});})).GeneratePdf(path); return path;
+        var orcamento = await orcamentos.ObterOrcamentoAsync(id);
+        var caminho = caminhoSaida ?? Path.Combine(Path.GetTempPath(), $"orcamento_{orcamento.Cliente.Placa}_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+        var oficina = configuration["Oficina:Nome"] ?? "Auto Orçamento";
+        var validade = configuration.GetValue("Oficina:ValidadeDias", 15);
+
+        Document.Create(documento => documento.Page(pagina =>
+        {
+            pagina.Size(PageSizes.A4);
+            pagina.Margin(35);
+            pagina.DefaultTextStyle(x => x.FontSize(10));
+            pagina.Header().Row(linha =>
+            {
+                linha.RelativeItem().Text(oficina).Bold().FontSize(18);
+                linha.ConstantItem(180).AlignRight().Text($"ORÇAMENTO #{orcamento.Id.ToString()[..8].ToUpper()}\n{orcamento.CriadoEm:dd/MM/yyyy}");
+            });
+            pagina.Content().PaddingVertical(20).Column(coluna =>
+            {
+                coluna.Spacing(12);
+                coluna.Item().Text($"Cliente: {orcamento.Cliente.Nome}   Telefone: {orcamento.Cliente.Telefone}   CPF: {orcamento.Cliente.Cpf}");
+                coluna.Item().Text($"Veículo: {orcamento.Cliente.Modelo}/{orcamento.Cliente.Ano}   Placa: {orcamento.Cliente.Placa}");
+                coluna.Item().Table(tabela =>
+                {
+                    tabela.ColumnsDefinition(x => { x.RelativeColumn(4); x.RelativeColumn(); x.RelativeColumn(); x.RelativeColumn(); x.RelativeColumn(); });
+                    tabela.Header(cabecalho =>
+                    {
+                        foreach (var titulo in new[] { "Descrição", "Qtd", "Vlr Unit", "Desc", "Subtotal" })
+                            cabecalho.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text(titulo).Bold();
+                    });
+                    foreach (var item in orcamento.Itens)
+                    {
+                        tabela.Cell().Padding(3).Text(item.Descricao);
+                        tabela.Cell().Padding(3).Text(item.Quantidade.ToString("N2"));
+                        tabela.Cell().Padding(3).Text(item.ValorUnitario.ToString("C"));
+                        tabela.Cell().Padding(3).Text(item.DescontoUnitario.ToString("C"));
+                        tabela.Cell().Padding(3).Text((item.Quantidade * (item.ValorUnitario - item.DescontoUnitario)).ToString("C"));
+                    }
+                });
+                coluna.Item().AlignRight().Text($"Total sem desconto: {orcamento.Totais.TotalSemDesconto:C}\nDesconto: {orcamento.Totais.TotalDesconto:C} ({orcamento.Totais.PercentualDesconto:N2}%)\nTOTAL: {orcamento.Totais.TotalComDesconto:C}").Bold();
+            });
+            pagina.Footer().Column(coluna =>
+            {
+                coluna.Item().Text($"Status: {orcamento.Status.ToString().ToLowerInvariant()} | Validade: {validade} dias");
+                coluna.Item().PaddingTop(25).AlignCenter().Text("__________________________________\nAssinatura do cliente");
+            });
+        })).GeneratePdf(caminho);
+        return caminho;
     }
-    public async Task ImprimirAsync(Guid id) { var path=await GerarPdfAsync(id,null); Process.Start(new ProcessStartInfo(path){UseShellExecute=true,Verb="print"}); }
-    public async Task<string?> SalvarComoAsync(Guid id) { var dialog=new SaveFileDialog{Filter="PDF (*.pdf)|*.pdf",FileName=$"orcamento_{id.ToString()[..8]}.pdf"}; return dialog.ShowDialog()==true?await GerarPdfAsync(id,dialog.FileName):null; }
+
+    public async Task ImprimirAsync(Guid id)
+    {
+        var caminho = await GerarPdfAsync(id, null);
+        Process.Start(new ProcessStartInfo(caminho) { UseShellExecute = true, Verb = "print" });
+    }
+
+    public async Task<string?> SalvarComoAsync(Guid id)
+    {
+        var dialogo = new SaveFileDialog { Filter = "PDF (*.pdf)|*.pdf", FileName = $"orcamento_{id.ToString()[..8]}.pdf" };
+        return dialogo.ShowDialog() == true ? await GerarPdfAsync(id, dialogo.FileName) : null;
+    }
 }

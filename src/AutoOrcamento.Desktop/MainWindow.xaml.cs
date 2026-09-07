@@ -14,4 +14,5 @@ public partial class MainWindow : Window
         if (!int.TryParse(Ano.Text,out var ano)){MessageBox.Show("Ano inválido.");return;}
         await vm.CadastrarClienteAsync(new ClienteDto(Nome.Text,Placa.Text,Modelo.Text,ano,Telefone.Text,Cpf.Text));
     }
+    private void AdicionarItem_Click(object sender, RoutedEventArgs e) => DescricaoItem.Focus();
 }

@@ -16,7 +16,12 @@
       "Bash(cp:*)",
       "Bash(git -C \"C:/Users/Breno/workspace/bbcar\" diff --stat)",
       "Bash(git -C \"C:/Users/Breno/workspace/bbcar\" diff --no-index -- /dev/null \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Core/CalculadoraOrcamento.cs\")",
-      "Bash(git -C \"C:/Users/Breno/workspace/bbcar\" status --short --untracked-files=normal)"
+      "Bash(git -C \"C:/Users/Breno/workspace/bbcar\" status --short --untracked-files=normal)",
+      "Bash(DOTNET_ROLL_FORWARD=Major dotnet build \"C:/Users/Breno/workspace/bbcar/AutoOrcamento.sln\")",
+      "Bash(DOTNET_ROLL_FORWARD=Major dotnet test \"C:/Users/Breno/workspace/bbcar/AutoOrcamento.sln\" --no-build)",
+      "Bash(DOTNET_ROLL_FORWARD=Major dotnet ef migrations list --project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Data/AutoOrcamento.Data.csproj\" --startup-project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Desktop/AutoOrcamento.Desktop.csproj\" --no-connect)",
+      "Bash(DOTNET_ROLL_FORWARD=Major dotnet ef migrations list --project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Data/AutoOrcamento.Data.csproj\" --startup-project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Desktop/AutoOrcamento.Desktop.csproj\" --no-build --no-connect --verbose)",
+      "Bash(DOTNET_ROLL_FORWARD=Major dotnet ef migrations list --project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Data/AutoOrcamento.Data.csproj\" --startup-project \"C:/Users/Breno/workspace/bbcar/src/AutoOrcamento.Desktop/AutoOrcamento.Desktop.csproj\" --no-build --no-connect)"
     ]
   }
 }

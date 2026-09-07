@@ -1,8 +1,10 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
 namespace AutoOrcamento.Data.Migrations;
 
+[DbContext(typeof(AppDbContext))]
+[Migration("202609070001_InitialCreate")]
 public partial class InitialCreate : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""

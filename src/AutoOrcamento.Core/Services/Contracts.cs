@@ -18,21 +18,31 @@ public interface IClienteService
     Task<IReadOnlyList<ClienteComVeiculo>> ListarAsync();
     Task AtualizarAsync(ClienteComVeiculo cliente);
 }
+
 public interface IOrcamentoService
 {
     Task<PagedResult<OrcamentoResumoDto>> ListarOrcamentosAsync(int page, string? filtro);
     Task<OrcamentoCompletoDto> ObterOrcamentoAsync(Guid id);
     Task<OrcamentoCompletoDto> SalvarOrcamentoAsync(OrcamentoDto dto);
 }
-public interface IPdfService { Task<string> GerarPdfAsync(Guid orcamentoId, string? caminhoSaida); Task ImprimirAsync(Guid orcamentoId); }
+
+public interface IPdfService
+{
+    Task<string> GerarPdfAsync(Guid orcamentoId, string? caminhoSaida);
+    Task<string?> SalvarComoAsync(Guid orcamentoId);
+    Task ImprimirAsync(Guid orcamentoId);
+}
 
 public static partial class Validacoes
 {
     [GeneratedRegex("^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$")]
     private static partial Regex PlacaRegex();
+
     [GeneratedRegex("^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$")]
     private static partial Regex CpfRegex();
+
     public static string NormalizarPlaca(string placa) => placa.Replace("-", "").Trim().ToUpperInvariant();
+
     public static void ValidarCliente(ClienteDto dto)
     {
         var placa = NormalizarPlaca(dto.Placa);
