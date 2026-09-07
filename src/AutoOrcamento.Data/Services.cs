@@ -40,18 +40,25 @@ public sealed class ClienteService(AppDbContext db) : IClienteService
         await db.SaveChangesAsync();
     }
 
-    private static ClienteComVeiculo Map(Veiculo v) => new(v.ClienteId, v.Id, v.Cliente.Nome, v.Placa, v.Modelo, v.Ano, v.Cliente.Telefone, v.Cliente.Cpf);
+    private static ClienteComVeiculo Map(Veiculo v) => new(v.ClienteId, v.Id, v.Cliente.Nome.ToUpperInvariant(), v.Placa.ToUpperInvariant(), v.Modelo.ToUpperInvariant(), v.Ano, v.Cliente.Telefone, v.Cliente.Cpf);
 }
 
 public sealed class OrcamentoService(AppDbContext db) : IOrcamentoService
 {
-    public async Task<PagedResult<OrcamentoResumoDto>> ListarOrcamentosAsync(int page, string? filtro)
+    public async Task<PagedResult<OrcamentoResumoDto>> ListarOrcamentosAsync(int page, string? filtro, DateTime? dataInicial, DateTime? dataFinal)
     {
         var q = db.Orcamentos.AsNoTracking().Include(x => x.Cliente).Include(x => x.Veiculo).AsQueryable();
-        if (!string.IsNullOrWhiteSpace(filtro)) { var f = filtro.Trim().ToUpper(); q = q.Where(x => x.Veiculo.Placa.Contains(f) || x.Cliente.Nome.ToUpper().Contains(f)); }
+        if (!string.IsNullOrWhiteSpace(filtro))
+        {
+            var f = filtro.Trim().ToUpperInvariant();
+            q = q.Where(x => x.Veiculo.Placa.Contains(f) || x.Cliente.Nome.ToUpper().Contains(f) || x.Cliente.Telefone.Contains(f));
+        }
+        if (dataInicial is { } inicial) q = q.Where(x => x.CriadoEm >= inicial);
+        if (dataFinal is { } final) q = q.Where(x => x.CriadoEm < final.AddDays(1));
         var total = await q.CountAsync();
-        var items = await q.OrderByDescending(x => x.CriadoEm).Skip(Math.Max(0, page - 1) * 100).Take(100).Select(x => new OrcamentoResumoDto(x.Id, x.Veiculo.Placa, x.Cliente.Nome, x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
-        return new(items, page, total);
+        var pagina = Math.Max(1, page);
+        var items = await q.OrderByDescending(x => x.CriadoEm).Skip((pagina - 1) * 100).Take(100).Select(x => new OrcamentoResumoDto(x.Id, x.Veiculo.Placa.ToUpper(), x.Cliente.Nome.ToUpper(), x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
+        return new(items, pagina, total);
     }
 
     public async Task<OrcamentoCompletoDto> ObterOrcamentoAsync(Guid id) => Map(await db.Orcamentos.AsNoTracking().Include(x => x.Cliente).Include(x => x.Veiculo).Include(x => x.Itens).SingleAsync(x => x.Id == id));

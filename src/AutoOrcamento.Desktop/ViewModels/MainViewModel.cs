@@ -21,6 +21,11 @@ public partial class ItemOrcamentoViewModel : ObservableObject
     partial void OnQuantidadeChanged(decimal value) => OnPropertyChanged(nameof(Subtotal));
     partial void OnValorUnitarioChanged(decimal value) => OnPropertyChanged(nameof(Subtotal));
     partial void OnDescontoUnitarioChanged(decimal value) => OnPropertyChanged(nameof(Subtotal));
+    partial void OnDescricaoChanged(string value)
+    {
+        var normalizado = value.ToUpperInvariant();
+        if (value != normalizado) Descricao = normalizado;
+    }
     public OrcamentoItemDto ToDto() => new(Id, Descricao, Quantidade, ValorUnitario, DescontoUnitario);
 }
 
@@ -36,6 +41,12 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ItemOrcamentoViewModel> Itens { get; } = [];
     public IReadOnlyList<StatusOrcamento> StatusDisponiveis { get; } = Enum.GetValues<StatusOrcamento>();
     [ObservableProperty] private string filtro = "";
+    [ObservableProperty] private DateTime? dataInicial;
+    [ObservableProperty] private DateTime? dataFinal;
+    [ObservableProperty] private int paginaAtual = 1;
+    [ObservableProperty] private int totalPaginas = 1;
+    public bool PodePaginaAnterior => PaginaAtual > 1;
+    public bool PodeProximaPagina => PaginaAtual < TotalPaginas;
     [ObservableProperty] private string placaBusca = "";
     [ObservableProperty] private ClienteComVeiculo? clienteSelecionado;
     [ObservableProperty] private Guid? orcamentoId;
@@ -50,9 +61,26 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string mensagemValidacao = "";
     public bool ClienteBloqueado => ClienteSelecionado is not null;
     public string ClienteDescricao => ClienteSelecionado is null ? "Nenhum cliente selecionado" : $"{ClienteSelecionado.Nome} — {ClienteSelecionado.Modelo}/{ClienteSelecionado.Ano}";
+    partial void OnDescricaoChanged(string value)
+    {
+        var normalizado = value.ToUpperInvariant();
+        if (value != normalizado) Descricao = normalizado;
+    }
+
     partial void OnClienteSelecionadoChanged(ClienteComVeiculo? value) { OnPropertyChanged(nameof(ClienteBloqueado)); OnPropertyChanged(nameof(ClienteDescricao)); MarcarAlterado(); }
-    partial void OnStatusChanged(StatusOrcamento value) => MarcarAlterado();
-    [RelayCommand] public async Task CarregarAsync() { Orcamentos.Clear(); foreach (var item in (await orcamentos.ListarOrcamentosAsync(1, Filtro)).Items) Orcamentos.Add(item); Clientes.Clear(); foreach (var cliente in await clientes.ListarAsync()) Clientes.Add(cliente); }
+    partial void OnStatusChanged(StatusOrcamento value) => MarcarAlterado();    [RelayCommand] public async Task CarregarAsync()
+    {
+        Orcamentos.Clear();
+        var resultado = await orcamentos.ListarOrcamentosAsync(PaginaAtual, Filtro, DataInicial, DataFinal);
+        foreach (var item in resultado.Items) Orcamentos.Add(item);
+        TotalPaginas = Math.Max(1, (int)Math.Ceiling(resultado.Total / 100m));
+        OnPropertyChanged(nameof(PodePaginaAnterior));
+        OnPropertyChanged(nameof(PodeProximaPagina));
+        Clientes.Clear();
+        foreach (var cliente in await clientes.ListarAsync()) Clientes.Add(cliente);
+    }
+    [RelayCommand] public async Task PaginaAnteriorAsync() { if (!PodePaginaAnterior) return; PaginaAtual--; await CarregarAsync(); }
+    [RelayCommand] public async Task ProximaPaginaAsync() { if (!PodeProximaPagina) return; PaginaAtual++; await CarregarAsync(); }
     [RelayCommand] public void Novo() { carregando = true; OrcamentoId = null; ClienteSelecionado = null; Itens.Clear(); Status = StatusOrcamento.Pendente; PlacaBusca = ""; Recalcular(); Alterado = false; carregando = false; AbaSelecionada = 1; }
     [RelayCommand] public void TrocarCliente() { ClienteSelecionado = null; PlacaBusca = ""; }
     [RelayCommand] public async Task BuscarClienteAsync() { ClienteSelecionado = await clientes.BuscarPorPlacaAsync(PlacaBusca); if (ClienteSelecionado is null) { MessageBox.Show("Cliente não localizado"); AbaSelecionada = 2; } }
@@ -60,7 +88,27 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand] public void RemoverItem(ItemOrcamentoViewModel item) => Itens.Remove(item);
     [RelayCommand] public async Task SalvarAsync() { try { await PersistirAsync(); await CarregarAsync(); AbaSelecionada = 0; } catch (Exception e) { MessageBox.Show(e.Message); } }
     [RelayCommand] public async Task EditarAsync(OrcamentoResumoDto resumo) { var o = await orcamentos.ObterOrcamentoAsync(resumo.Id); carregando = true; OrcamentoId = o.Id; ClienteSelecionado = o.Cliente; PlacaBusca = o.Cliente.Placa; Status = o.Status; Itens.Clear(); foreach (var item in o.Itens) Itens.Add(new ItemOrcamentoViewModel { Id = item.Id, Descricao = item.Descricao, Quantidade = item.Quantidade, ValorUnitario = item.ValorUnitario, DescontoUnitario = item.DescontoUnitario }); Recalcular(); Alterado = false; carregando = false; AbaSelecionada = 1; }
-    [RelayCommand] public async Task ImprimirAsync(OrcamentoResumoDto? resumo) { try { if (resumo is not null) { await pdf.ImprimirAsync(resumo.Id); return; } if (OrcamentoId is null || Alterado) { if (OrcamentoId is not null && MessageBox.Show("Salvar alterações antes de imprimir?", "Imprimir", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return; await PersistirAsync(); } await pdf.ImprimirAsync(OrcamentoId!.Value); } catch (Exception e) { MessageBox.Show(e.Message); } }
+    [RelayCommand] public async Task ImprimirAsync(OrcamentoResumoDto? resumo)
+    {
+        try
+        {
+            if (resumo is null && (OrcamentoId is null || Alterado))
+            {
+                if (OrcamentoId is not null && MessageBox.Show("Salvar alterações antes de imprimir?", "Imprimir", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+                await PersistirAsync();
+            }
+            else if (resumo is not null && OrcamentoId == resumo.Id && Alterado)
+            {
+                if (MessageBox.Show("Salvar alterações antes de imprimir?", "Imprimir", MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+                await PersistirAsync();
+            }
+
+            var id = resumo?.Id ?? OrcamentoId;
+            if (id is null) throw new ArgumentException("Selecione um orçamento para imprimir.");
+            await pdf.ImprimirAsync(id.Value);
+        }
+        catch (Exception e) { MessageBox.Show(e.Message); }
+    }
     [RelayCommand] public async Task SalvarComoAsync() { try { if (OrcamentoId is null || Alterado) await PersistirAsync(); await pdf.SalvarComoAsync(OrcamentoId!.Value); } catch (Exception e) { MessageBox.Show(e.Message); } }
     [RelayCommand] public async Task CadastrarClienteAsync(ClienteDto dto) { try { ClienteSelecionado = await clientes.CadastrarClienteAsync(dto); PlacaBusca = ClienteSelecionado.Placa; await CarregarAsync(); AbaSelecionada = 1; } catch (Exception e) { MessageBox.Show(e.Message); } }
     [RelayCommand] public async Task AtualizarClienteAsync(ClienteComVeiculo cliente) { try { await clientes.AtualizarAsync(cliente); await CarregarAsync(); } catch (Exception e) { MessageBox.Show(e.Message); } }

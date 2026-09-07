@@ -33,7 +33,7 @@ public interface IClienteService
 
 public interface IOrcamentoService
 {
-    Task<PagedResult<OrcamentoResumoDto>> ListarOrcamentosAsync(int page, string? filtro);
+    Task<PagedResult<OrcamentoResumoDto>> ListarOrcamentosAsync(int page, string? filtro, DateTime? dataInicial, DateTime? dataFinal);
     Task<OrcamentoCompletoDto> ObterOrcamentoAsync(Guid id);
     Task<OrcamentoCompletoDto> SalvarOrcamentoAsync(OrcamentoDto dto);
 }
