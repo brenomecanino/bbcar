@@ -14,7 +14,8 @@ public sealed class PdfService(IOrcamentoService orcamentos, IConfiguration conf
     public async Task<string> GerarPdfAsync(Guid id, string? caminhoSaida)
     {
         var orcamento = await orcamentos.ObterOrcamentoAsync(id);
-        var caminho = caminhoSaida ?? Path.Combine(Path.GetTempPath(), $"orcamento_{orcamento.Cliente.Placa}_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+        var caminho = caminhoSaida ?? Path.Combine(Path.GetTempPath(), "AutoOrcamento", $"orcamento_{orcamento.Id:N}.pdf");
+        Directory.CreateDirectory(Path.GetDirectoryName(caminho)!);
         var oficina = configuration["Oficina:Nome"] ?? "Auto Orçamento";
         var validade = configuration.GetValue("Oficina:ValidadeDias", 15);
 
@@ -64,7 +65,27 @@ public sealed class PdfService(IOrcamentoService orcamentos, IConfiguration conf
     public async Task ImprimirAsync(Guid id)
     {
         var caminho = await GerarPdfAsync(id, null);
-        Process.Start(new ProcessStartInfo(caminho) { UseShellExecute = true, Verb = "print" });
+        var arquivo = Path.GetFullPath(caminho);
+        if (!File.Exists(arquivo)) throw new FileNotFoundException("O PDF do orçamento não foi gerado.", arquivo);
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = arquivo,
+                UseShellExecute = true,
+                Verb = "print"
+            });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = arquivo,
+                UseShellExecute = true,
+                Verb = "open"
+            });
+        }
     }
 
     public async Task<string?> SalvarComoAsync(Guid id)

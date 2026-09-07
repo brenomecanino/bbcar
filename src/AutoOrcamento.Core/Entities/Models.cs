@@ -26,6 +26,7 @@ public enum StatusOrcamento { Pendente, Aprovado, Recusado }
 public sealed class Orcamento
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public long Numero { get; set; }
     public Guid ClienteId { get; set; }
     public Guid VeiculoId { get; set; }
     public StatusOrcamento Status { get; set; } = StatusOrcamento.Pendente;

@@ -77,8 +77,11 @@ public sealed class OrcamentoService(AppDbContext db) : IOrcamentoService
             o.ClienteId = dto.ClienteId;
             o.VeiculoId = dto.VeiculoId;
             db.OrcamentoItens.RemoveRange(o.Itens);
-            o.Itens.Clear();
-            foreach (var item in entities) { item.OrcamentoId = o.Id; o.Itens.Add(item); }
+            foreach (var item in entities)
+            {
+                item.OrcamentoId = o.Id;
+                db.OrcamentoItens.Add(item);
+            }
         }
         else
         {
