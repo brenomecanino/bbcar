@@ -2,7 +2,10 @@ using AutoOrcamento.Core.Entities;
 
 namespace AutoOrcamento.Core;
 
-public readonly record struct TotaisOrcamento(decimal TotalSemDesconto, decimal TotalDesconto, decimal TotalComDesconto, decimal PercentualDesconto);
+public readonly record struct TotaisOrcamento(decimal TotalSemDesconto, decimal TotalDesconto, decimal TotalComDesconto, decimal PercentualDesconto)
+{
+    public static TotaisOrcamento Zero => new(0, 0, 0, 0);
+}
 
 public static class CalculadoraOrcamento
 {

@@ -4,7 +4,19 @@ using AutoOrcamento.Core.Entities;
 namespace AutoOrcamento.Core.Services;
 
 public sealed record ClienteDto(string Nome, string Placa, string Modelo, int Ano, string Telefone, string Cpf);
-public sealed record ClienteComVeiculo(Guid ClienteId, Guid VeiculoId, string Nome, string Placa, string Modelo, int Ano, string Telefone, string Cpf);
+public sealed class ClienteComVeiculo
+{
+    public ClienteComVeiculo(Guid clienteId, Guid veiculoId, string nome, string placa, string modelo, int ano, string telefone, string cpf)
+    { ClienteId = clienteId; VeiculoId = veiculoId; Nome = nome; Placa = placa; Modelo = modelo; Ano = ano; Telefone = telefone; Cpf = cpf; }
+    public Guid ClienteId { get; }
+    public Guid VeiculoId { get; }
+    public string Nome { get; set; }
+    public string Placa { get; set; }
+    public string Modelo { get; set; }
+    public int Ano { get; set; }
+    public string Telefone { get; set; }
+    public string Cpf { get; set; }
+}
 public sealed record OrcamentoItemDto(Guid? Id, string Descricao, decimal Quantidade, decimal ValorUnitario, decimal DescontoUnitario);
 public sealed record OrcamentoDto(Guid? Id, Guid ClienteId, Guid VeiculoId, StatusOrcamento Status, IReadOnlyList<OrcamentoItemDto> Itens);
 public sealed record OrcamentoResumoDto(Guid Id, string Placa, string Cliente, string Contato, DateTimeOffset Data, decimal ValorTotal, StatusOrcamento Status);
