@@ -58,4 +58,4 @@ nunit-*.xml
 
 # Visual
 .vs
-.openclaude/worktrees
+.openclaude/worktrees/**
