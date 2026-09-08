@@ -64,6 +64,8 @@ public partial class MainWindow : Window
 
     // Quantidade: aceitar apenas dígitos
     private static readonly Regex _digitsOnly = new("^[0-9]+$");
+    private static readonly Regex _moneyInput = new("^[0-9]*(,[0-9]{0,2})?$");
+    private static readonly CultureInfo _brazilianCulture = CultureInfo.GetCultureInfo("pt-BR");
     private void Quantidade_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
         e.Handled = !_digitsOnly.IsMatch(e.Text);
@@ -94,29 +96,59 @@ public partial class MainWindow : Window
         else e.CancelCommand();
     }
 
-    private void MoneyDigits_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void Money_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
-        if (sender is not System.Windows.Controls.TextBox tb) return;
-        var text = tb.Text ?? string.Empty;
-        if (string.IsNullOrEmpty(text))
+        if (sender is not System.Windows.Controls.TextBox textBox) return;
+        var proposed = textBox.Text.Remove(textBox.SelectionStart, textBox.SelectionLength)
+            .Insert(textBox.SelectionStart, e.Text);
+        e.Handled = !_moneyInput.IsMatch(proposed);
+    }
+
+    private void Money_Pasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox textBox ||
+            !e.DataObject.GetDataPresent(DataFormats.Text))
         {
-            if (tb.Name == "ValorUnitarioBox") vm.ValorUnitario = 0m;
-            if (tb.Name == "DescontoUnitarioBox") vm.DescontoUnitario = 0m;
+            e.CancelCommand();
             return;
         }
 
-        if (decimal.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
+        var pasted = e.DataObject.GetData(DataFormats.Text) as string ?? string.Empty;
+        var proposed = textBox.Text.Remove(textBox.SelectionStart, textBox.SelectionLength)
+            .Insert(textBox.SelectionStart, pasted);
+        if (!_moneyInput.IsMatch(proposed)) e.CancelCommand();
+    }
+
+    private void MoneyDigits_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.TextBox tb) return;
+        var text = tb.Text?.Trim() ?? string.Empty;
+        var error = tb.Name == "ValorUnitarioBox" ? ValorError : DescontoError;
+
+        if (string.IsNullOrEmpty(text))
         {
-            if (tb.Name == "ValorUnitarioBox") vm.ValorUnitario = value;
-            else if (tb.Name == "DescontoUnitarioBox") vm.DescontoUnitario = value;
+            error.Visibility = Visibility.Collapsed;
+            SetMoneyValue(tb, 0m);
+            return;
+        }
+
+        if (decimal.TryParse(text, NumberStyles.AllowDecimalPoint, _brazilianCulture, out var value) &&
+            _moneyInput.IsMatch(text))
+        {
+            error.Visibility = Visibility.Collapsed;
+            SetMoneyValue(tb, value);
         }
         else
         {
-            if (tb.Name == "ValorUnitarioBox") ValorError.Visibility = Visibility.Visible;
-            if (tb.Name == "DescontoUnitarioBox") DescontoError.Visibility = Visibility.Visible;
+            error.Visibility = Visibility.Visible;
         }
     }
 
+    private void SetMoneyValue(System.Windows.Controls.TextBox textBox, decimal value)
+    {
+        if (textBox.Name == "ValorUnitarioBox") vm.ValorUnitario = value;
+        else if (textBox.Name == "DescontoUnitarioBox") vm.DescontoUnitario = value;
+    }
     private void Quantidade_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
         if (sender is not System.Windows.Controls.TextBox tb) return;

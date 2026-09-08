@@ -67,7 +67,7 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding Orcamentos}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid DockPanel.Dock="Top" Height="420" ItemsSource="{Binding Orcamentos}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
                                 <!-- Colunas com larguras mais equilibradas para evitar que 'Cliente' ocupe todo o espaço -->
                                 <DataGridTextColumn Header="Nº" Binding="{Binding Numero, StringFormat={}{0:D5}}" Width="80" />
@@ -98,12 +98,12 @@
                             </DataGrid.Columns>
                         </DataGrid>
 
-                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                            <Button Content="&lt; Anterior" Command="{Binding PaginaAnteriorCommand}" IsEnabled="{Binding PodePaginaAnterior}" Margin="4,0"/>
-                            <TextBlock Text="{Binding PaginaAtual, StringFormat=Página {0}}" VerticalAlignment="Center" Margin="10,0"/>
-                            <TextBlock Text="de" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding TotalPaginas}" VerticalAlignment="Center" Margin="5,0,10,0"/>
-                            <Button Content="Próxima &gt;" Command="{Binding ProximaPaginaCommand}" IsEnabled="{Binding PodeProximaPagina}" Margin="4,0"/>
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
+                            <Button Content="&lt; Anterior" Command="{Binding PaginaAnteriorCommand}" IsEnabled="{Binding PodePaginaAnterior}" Padding="8,3" FontSize="12" Margin="2,0"/>
+                            <TextBlock Text="{Binding PaginaAtual, StringFormat=Página {0}}" VerticalAlignment="Center" Margin="8,0" FontSize="12"/>
+                            <TextBlock Text="de" VerticalAlignment="Center" FontSize="12"/>
+                            <TextBlock Text="{Binding TotalPaginas}" VerticalAlignment="Center" Margin="4,0,8,0" FontSize="12"/>
+                            <Button Content="Próxima &gt;" Command="{Binding ProximaPaginaCommand}" IsEnabled="{Binding PodeProximaPagina}" Padding="8,3" FontSize="12" Margin="2,0"/>
                         </StackPanel>
                     </DockPanel>
                 </TabItem>
