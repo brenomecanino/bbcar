@@ -57,7 +57,7 @@ public sealed class OrcamentoService(AppDbContext db) : IOrcamentoService
         if (dataFinal is { } final) q = q.Where(x => x.CriadoEm < final.AddDays(1));
         var total = await q.CountAsync();
         var pagina = Math.Max(1, page);
-        var items = await q.OrderByDescending(x => x.CriadoEm).Skip((pagina - 1) * 100).Take(100).Select(x => new OrcamentoResumoDto(x.Id, x.Numero, x.Veiculo.Placa.ToUpper(), x.Cliente.Nome.ToUpper(), x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
+        var items = await q.OrderByDescending(x => x.CriadoEm).Skip((pagina - 1) * 50).Take(50).Select(x => new OrcamentoResumoDto(x.Id, x.Numero, x.Veiculo.Placa.ToUpper(), x.Cliente.Nome.ToUpper(), x.Cliente.Telefone, x.CriadoEm, x.TotalComDesconto, x.Status)).ToListAsync();
         return new(items, pagina, total);
     }
 

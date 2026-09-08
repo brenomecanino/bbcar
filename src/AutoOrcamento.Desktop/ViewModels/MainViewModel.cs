@@ -73,7 +73,7 @@ public partial class MainViewModel : ObservableObject
         Orcamentos.Clear();
         var resultado = await orcamentos.ListarOrcamentosAsync(PaginaAtual, Filtro, DataInicial, DataFinal);
         foreach (var item in resultado.Items) Orcamentos.Add(item);
-        TotalPaginas = Math.Max(1, (int)Math.Ceiling(resultado.Total / 100m));
+        TotalPaginas = Math.Max(1, (int)Math.Ceiling(resultado.Total / 50m));
         OnPropertyChanged(nameof(PodePaginaAnterior));
         OnPropertyChanged(nameof(PodeProximaPagina));
         Clientes.Clear();
